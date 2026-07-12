@@ -4,8 +4,10 @@ import argparse
 import sys
 import tempfile
 
+from .diarizer import diarize
 from .recorder import record_to_file
-from .transcriber import transcribe_file, translate_file
+from .speakers import assign_speakers
+from .transcriber import transcribe_file, transcribe_segments, translate_file
 
 
 def main() -> None:
@@ -15,6 +17,7 @@ def main() -> None:
     parser.add_argument(
         "--translate", action="store_true", help="Translate non-English speech into an English transcript"
     )
+    parser.add_argument("--diarize", action="store_true", help="Label each line with the speaker who said it")
     args = parser.parse_args()
 
     if args.file:
@@ -25,8 +28,17 @@ def main() -> None:
         record_to_file(audio_path, args.seconds)
 
     print(f"Transcribing {audio_path}...", file=sys.stderr)
-    text = translate_file(audio_path) if args.translate else transcribe_file(audio_path)
-    print(text)
+    task = "translate" if args.translate else "transcribe"
+
+    if args.diarize:
+        print("Diarizing speakers...", file=sys.stderr)
+        turns = diarize(audio_path)
+        segments = transcribe_segments(audio_path, task=task)
+        for speaker, text in assign_speakers(segments, turns):
+            print(f"[{speaker}] {text}")
+    else:
+        text = translate_file(audio_path) if args.translate else transcribe_file(audio_path)
+        print(text)
 
 
 if __name__ == "__main__":

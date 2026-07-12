@@ -18,17 +18,30 @@ def _asr_pipeline():
 _REPETITION_GUARD = {"no_repeat_ngram_size": 3}
 
 
-def transcribe_file(audio_path: str) -> str:
+def _transcribe(audio_path: str, task: str) -> dict:
     # return_timestamps=True triggers Whisper's built-in long-form generation
     # (condition_on_prev_tokens + repetition/no-speech guards) for audio over
     # 30s, instead of the naive chunk_length_s split which hallucinates loops.
-    result = _asr_pipeline()(audio_path, return_timestamps=True, generate_kwargs=_REPETITION_GUARD)
-    return result["text"].strip()
+    generate_kwargs = dict(_REPETITION_GUARD)
+    if task == "translate":
+        generate_kwargs["task"] = "translate"
+    return _asr_pipeline()(audio_path, return_timestamps=True, generate_kwargs=generate_kwargs)
+
+
+def transcribe_file(audio_path: str) -> str:
+    return _transcribe(audio_path, task="transcribe")["text"].strip()
 
 
 def translate_file(audio_path: str) -> str:
     """Transcribe non-English speech directly into an English transcript."""
-    result = _asr_pipeline()(
-        audio_path, return_timestamps=True, generate_kwargs={**_REPETITION_GUARD, "task": "translate"}
-    )
-    return result["text"].strip()
+    return _transcribe(audio_path, task="translate")["text"].strip()
+
+
+def transcribe_segments(audio_path: str, task: str = "transcribe") -> list[tuple[float, float, str]]:
+    """Return (start_seconds, end_seconds, text) segments for speaker alignment."""
+    result = _transcribe(audio_path, task=task)
+    segments = []
+    for chunk in result["chunks"]:
+        start, end = chunk["timestamp"]
+        segments.append((start, end if end is not None else start, chunk["text"].strip()))
+    return segments
