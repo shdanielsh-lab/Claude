@@ -22,7 +22,7 @@ def _diarization_pipeline():
             "Accept the model terms at huggingface.co/pyannote/speaker-diarization-3.1 "
             "and huggingface.co/pyannote/segmentation-3.0, then set HF_TOKEN to an access token."
         )
-    return Pipeline.from_pretrained(MODEL_ID, use_auth_token=token)
+    return Pipeline.from_pretrained(MODEL_ID, token=token)
 
 
 def diarize(audio_path: str) -> list[tuple[float, float, str]]:
