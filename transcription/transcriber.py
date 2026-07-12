@@ -15,3 +15,9 @@ def _asr_pipeline():
 def transcribe_file(audio_path: str) -> str:
     result = _asr_pipeline()(audio_path)
     return result["text"].strip()
+
+
+def translate_file(audio_path: str) -> str:
+    """Transcribe non-English speech directly into an English transcript."""
+    result = _asr_pipeline()(audio_path, generate_kwargs={"task": "translate"})
+    return result["text"].strip()
