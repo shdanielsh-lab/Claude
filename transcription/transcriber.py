@@ -9,7 +9,9 @@ MODEL_ID = "openai/whisper-medium"
 
 @lru_cache(maxsize=1)
 def _asr_pipeline():
-    return pipeline("automatic-speech-recognition", model=MODEL_ID)
+    # chunk_length_s splits audio longer than Whisper's ~30s window into
+    # overlapping windows so recordings of arbitrary length can be transcribed.
+    return pipeline("automatic-speech-recognition", model=MODEL_ID, chunk_length_s=30, stride_length_s=5)
 
 
 def transcribe_file(audio_path: str) -> str:
