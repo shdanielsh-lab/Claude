@@ -4,7 +4,7 @@ from functools import lru_cache
 
 from transformers import pipeline
 
-MODEL_ID = "openai/whisper-tiny"
+MODEL_ID = "openai/whisper-medium"
 
 
 @lru_cache(maxsize=1)
