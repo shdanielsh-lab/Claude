@@ -27,5 +27,8 @@ def _diarization_pipeline():
 
 def diarize(audio_path: str) -> list[tuple[float, float, str]]:
     """Return a list of (start_seconds, end_seconds, speaker_label) turns."""
-    diarization = _diarization_pipeline()(audio_path)
-    return [(turn.start, turn.end, speaker) for turn, _, speaker in diarization.itertracks(yield_label=True)]
+    output = _diarization_pipeline()(audio_path)
+    # exclusive_speaker_diarization has no overlapping turns, which makes
+    # aligning it to non-overlapping Whisper segments straightforward.
+    annotation = output.exclusive_speaker_diarization
+    return [(turn.start, turn.end, speaker) for turn, _, speaker in annotation.itertracks(yield_label=True)]
