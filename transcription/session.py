@@ -4,6 +4,7 @@ import argparse
 import sys
 import tempfile
 
+from .audio_utils import to_wav
 from .diarizer import diarize
 from .recorder import record_to_file
 from .speakers import assign_speakers
@@ -32,7 +33,9 @@ def main() -> None:
 
     if args.diarize:
         print("Diarizing speakers...", file=sys.stderr)
-        turns = diarize(audio_path)
+        # pyannote's torchcodec backend is stricter about container format than
+        # Whisper's ffmpeg-subprocess decoding, so convert to a clean WAV first.
+        turns = diarize(to_wav(audio_path))
         segments = transcribe_segments(audio_path, task=task)
         for speaker, text in assign_speakers(segments, turns):
             print(f"[{speaker}] {text}")
