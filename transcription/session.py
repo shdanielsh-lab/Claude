@@ -11,6 +11,11 @@ from .speakers import assign_speakers
 from .transcriber import transcribe_file, transcribe_segments, translate_file
 
 
+def _format_timestamp(seconds: float) -> str:
+    minutes, secs = divmod(int(seconds), 60)
+    return f"{minutes:02d}:{secs:02d}"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Recording transcript session")
     parser.add_argument("--file", help="Transcribe an existing WAV file instead of recording")
@@ -37,8 +42,8 @@ def main() -> None:
         # Whisper's ffmpeg-subprocess decoding, so convert to a clean WAV first.
         turns = diarize(to_wav(audio_path))
         segments = transcribe_segments(audio_path, task=task)
-        for speaker, text in assign_speakers(segments, turns):
-            print(f"[{speaker}] {text}")
+        for speaker, start, end, text in assign_speakers(segments, turns):
+            print(f"[{_format_timestamp(start)}-{_format_timestamp(end)}] [{speaker}] {text}")
     else:
         text = translate_file(audio_path) if args.translate else transcribe_file(audio_path)
         print(text)

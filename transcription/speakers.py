@@ -3,9 +3,9 @@
 
 def assign_speakers(
     segments: list[tuple[float, float, str]], turns: list[tuple[float, float, str]]
-) -> list[tuple[str, str]]:
+) -> list[tuple[str, float, float, str]]:
     """Label each (start, end, text) segment with the speaker turn it overlaps most,
-    then merge consecutive segments from the same speaker into one line each."""
+    then merge consecutive segments from the same speaker into one (speaker, start, end, text) line."""
     labeled = []
     for seg_start, seg_end, text in segments:
         if not text:
@@ -15,12 +15,13 @@ def assign_speakers(
             overlap = min(seg_end, turn_end) - max(seg_start, turn_start)
             if overlap > best_overlap:
                 best_overlap, best_speaker = overlap, speaker
-        labeled.append((best_speaker, text))
+        labeled.append((best_speaker, seg_start, seg_end, text))
 
-    merged: list[tuple[str, str]] = []
-    for speaker, text in labeled:
+    merged: list[list] = []
+    for speaker, start, end, text in labeled:
         if merged and merged[-1][0] == speaker:
-            merged[-1] = (speaker, merged[-1][1] + " " + text)
+            merged[-1][2] = end
+            merged[-1][3] += " " + text
         else:
-            merged.append((speaker, text))
-    return merged
+            merged.append([speaker, start, end, text])
+    return [tuple(line) for line in merged]
